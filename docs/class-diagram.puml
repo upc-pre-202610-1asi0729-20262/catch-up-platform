@@ -1,0 +1,152 @@
+@startuml
+' CatchUp Platform Class Diagram
+
+skinparam classAttributeIconSize 0
+' News Bounded Context
+package "news" {
+
+  package "interfaces.rest" {
+    class FavoriteSourcesController {
+      +getFavoriteSourcesWithParameters(params)
+      +getFavoriteSourceById(id)
+      +createFavoriteSource(resource)
+    }
+
+    package "interfaces.rest.resources" {
+      class FavoriteSourceResource <<resource>> {
+        +Long id
+        +String newsApiKey
+        +String sourceId
+      }
+      class CreateFavoriteSourceResource <<resource>> {
+        +String newsApiKey
+        +String sourceId
+        +CreateFavoriteSourceResource(String newsApiKey, String sourceId)
+      }
+    }
+
+    package "interfaces.rest.transform" {
+      class FavoriteSourceResourceFromEntityAssembler <<assembler>> {
+        +toResourceFromEntity(FavoriteSource) : FavoriteSourceResource
+      }
+      class CreateFavoriteSourceCommandFromResourceAssembler <<assembler>> {
+        +toCommandFromResource(CreateFavoriteSourceResource) : CreateFavoriteSourceCommand
+      }
+    }
+  }
+
+  package "domain.services" {
+    interface FavoriteSourceCommandService <<domain-service>> {
+      +handle(CreateFavoriteSourceCommand) : Optional<FavoriteSource>
+    }
+    interface FavoriteSourceQueryService <<domain-service>> {
+      +handle(GetAllFavoriteSourcesByNewsApiKeyQuery) : List<FavoriteSource>
+      +handle(GetFavoriteSourceByIdQuery) : Optional<FavoriteSource>
+      +handle(GetFavoriteSourceByNewsApiKeyAndSourceIdQuery) : Optional<FavoriteSource>
+    }
+  }
+
+  package "application.internal.commandservices" {
+    class FavoriteSourceCommandServiceImpl <<service>> {
+      +handle(CreateFavoriteSourceCommand) : Optional<FavoriteSource>
+    }
+  }
+
+  package "application.internal.queryservices" {
+    class FavoriteSourceQueryServiceImpl <<service>> {
+      +handle(GetAllFavoriteSourcesByNewsApiKeyQuery) : List<FavoriteSource>
+      +handle(GetFavoriteSourceByIdQuery) : Optional<FavoriteSource>
+      +handle(GetFavoriteSourceByNewsApiKeyAndSourceIdQuery) : Optional<FavoriteSource>
+    }
+  }
+
+  package "domain.model.aggregates" {
+    class FavoriteSource {
+      - Long id
+      - String newsApiKey
+      - String sourceId
+      - Date createdAt
+      - Date updatedAt
+      + FavoriteSource(CreateFavoriteSourceCommand)
+      +getId() : Long
+      +getNewsApiKey() : String
+      +getSourceId() : String
+    }
+  }
+
+  package "domain.model.commands" {
+    class CreateFavoriteSourceCommand <<command>> {
+      +String newsApiKey
+      +String sourceId
+      +CreateFavoriteSourceCommand(String newsApiKey, String sourceId)
+    }
+  }
+
+  package "domain.model.queries" {
+    class GetAllFavoriteSourcesByNewsApiKeyQuery <<query>> {
+      +String newsApiKey
+    }
+    class GetFavoriteSourceByIdQuery <<query>> {
+      +Long id
+    }
+    class GetFavoriteSourceByNewsApiKeyAndSourceIdQuery <<query>> {
+      +String newsApiKey
+      +String sourceId
+    }
+  }
+
+  package "infrastructure.persistence.jpa" {
+    interface FavoriteSourceRepository <<repository>> {
+      +List<FavoriteSource> findAllByNewsApiKey(String newsApiKey)
+      +boolean existsByNewsApiKeyAndSourceId(String newsApiKey, String sourceId)
+      +Optional<FavoriteSource> findByNewsApiKeyAndSourceId(String newsApiKey, String sourceId)
+      +Optional<FavoriteSource> findById(Long id)
+      +FavoriteSource save(FavoriteSource entity)
+    }
+  }
+
+}
+
+package "shared" {
+    package "infrastructure.persistence.jpa" {
+      class SnakeCasePhysicalNamingStrategy <<strategy>> {
+        +toPhysicalCatalogName(Identifier, JdbcEnvironment) : Identifier
+        +toPhysicalSchemaName(Identifier, JdbcEnvironment) : Identifier
+        +toPhysicalTableName(Identifier, JdbcEnvironment) : Identifier
+        +toPhysicalSequenceName(Identifier, JdbcEnvironment) : Identifier
+        +toPhysicalColumnName(Identifier, JdbcEnvironment) : Identifier
+        -toSnakeCase(Identifier) : Identifier
+        -toPlural(Identifier) : Identifier
+      }
+    }
+}
+' Relationships
+FavoriteSourcesController --> FavoriteSourceCommandService : uses
+FavoriteSourcesController --> FavoriteSourceQueryService : uses
+FavoriteSourcesController --> FavoriteSourceResourceFromEntityAssembler : uses
+FavoriteSourcesController --> CreateFavoriteSourceCommandFromResourceAssembler : uses
+
+FavoriteSourceCommandServiceImpl ..|> FavoriteSourceCommandService : implements
+FavoriteSourceQueryServiceImpl ..|> FavoriteSourceQueryService : implements
+
+FavoriteSourceCommandServiceImpl --> FavoriteSourceRepository : uses
+FavoriteSourceQueryServiceImpl --> FavoriteSourceRepository : uses
+
+FavoriteSourceRepository --> FavoriteSource : manages
+
+FavoriteSourceResourceFromEntityAssembler ..> FavoriteSource : reads
+FavoriteSourceResourceFromEntityAssembler --> FavoriteSourceResource : produces
+
+CreateFavoriteSourceCommandFromResourceAssembler ..> CreateFavoriteSourceResource : reads
+CreateFavoriteSourceCommandFromResourceAssembler --> CreateFavoriteSourceCommand : produces
+
+CreateFavoriteSourceCommand --> FavoriteSource : constructs
+
+' Note about repository placement
+note bottom
+  The repository interface is physically implemented as
+  `news.infrastructure.persistence.jpa.FavoriteSourceRepository` in the
+  codebase.
+end note
+
+@enduml
