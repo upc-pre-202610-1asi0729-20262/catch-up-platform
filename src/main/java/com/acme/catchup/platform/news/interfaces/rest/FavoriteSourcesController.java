@@ -16,6 +16,11 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,8 +33,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * REST controller for favorite sources.
- * @summary
- * This class provides REST endpoints for favorite sources.
+ *
+ * @summary This class provides REST endpoints for favorite sources.
  * @since 1.0
  */
 @RestController
@@ -38,27 +43,31 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class FavoriteSourcesController {
     private final FavoriteSourceCommandService favoriteSourceCommandService;
     private final FavoriteSourceQueryService favoriteSourceQueryService;
+    private final MessageSource messageSource;
 
     /**
      * Constructor for FavoriteSourcesController.
+     *
      * @param favoriteSourceCommandService Favorite source command service
-     * @param favoriteSourceQueryService Favorite source query service
-     * @since 1.0
+     * @param favoriteSourceQueryService   Favorite source query service
      * @see FavoriteSourceCommandService
      * @see FavoriteSourceQueryService
+     * @since 1.0
      */
-    public FavoriteSourcesController(FavoriteSourceCommandService favoriteSourceCommandService, FavoriteSourceQueryService favoriteSourceQueryService) {
+    public FavoriteSourcesController(FavoriteSourceCommandService favoriteSourceCommandService, FavoriteSourceQueryService favoriteSourceQueryService, MessageSource messageSource) {
         this.favoriteSourceCommandService = favoriteSourceCommandService;
         this.favoriteSourceQueryService = favoriteSourceQueryService;
+        this.messageSource = messageSource;
     }
 
     /**
      * Creates a favorite source.
+     *
      * @param resource CreateFavoriteSourceResource containing the news API key and source ID
-     * @return ResponseEntity with the created favorite source resource, or bad request if the resource is invalid
-     * @since 1.0
+     * @return ResponseEntity with the created favorite source resource, conflict if the favorite source already exists, or bad request otherwise.
      * @see CreateFavoriteSourceResource
      * @see FavoriteSourceResource
+     * @since 1.0
      */
     @Operation(
             summary = "Create a favorite source",
@@ -68,19 +77,25 @@ public class FavoriteSourcesController {
             @ApiResponse(responseCode = "400", description = "Bad request")
     })
     @PostMapping
-    public ResponseEntity<FavoriteSourceResource> createFavoriteSource(@RequestBody CreateFavoriteSourceResource resource) {
+    public ResponseEntity<?> createFavoriteSource(@Valid @RequestBody CreateFavoriteSourceResource resource) {
         Optional<FavoriteSource> favoriteSource = favoriteSourceCommandService
                 .handle(CreateFavoriteSourceCommandFromResourceAssembler.toCommandFromResource(resource));
+        if (favoriteSource.isEmpty())
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ProblemDetail.forStatusAndDetail(
+                    HttpStatus.CONFLICT,
+                    messageSource.getMessage("favorite.source.error.duplicate", null,
+                            LocaleContextHolder.getLocale())));
         return favoriteSource.map(source -> new ResponseEntity<>(FavoriteSourceResourceFromEntityAssembler.toResourceFromEntity(source), CREATED))
                 .orElseGet(() -> ResponseEntity.badRequest().build());
     }
 
     /**
      * Gets a favorite source by ID.
+     *
      * @param id Favorite source ID
      * @return ResponseEntity with the favorite source resource if found, or not found otherwise
-     * @since 1.0
      * @see FavoriteSourceResource
+     * @since 1.0
      */
     @Operation(
             summary = "Get a favorite source by ID",
@@ -98,10 +113,11 @@ public class FavoriteSourcesController {
 
     /**
      * Gets all favorite sources by news API key.
+     *
      * @param newsApiKey News API key
      * @return ResponseEntity with the list of favorite source resources if found, or not found otherwise
-     * @since 1.0
      * @see FavoriteSourceResource
+     * @since 1.0
      */
     private ResponseEntity<List<FavoriteSourceResource>> getAllFavoriteSourcesByNewsApiKey(String newsApiKey) {
         var getAllFavoriteSourcesByNewsApiKeyQuery = new GetAllFavoriteSourcesByNewsApiKeyQuery(newsApiKey);
@@ -113,11 +129,12 @@ public class FavoriteSourcesController {
 
     /**
      * Gets a favorite source by news API key and source ID.
+     *
      * @param newsApiKey News API key
-     * @param sourceId Source ID
+     * @param sourceId   Source ID
      * @return ResponseEntity with the favorite source resource if found, or not found otherwise
-     * @since 1.0
      * @see FavoriteSourceResource
+     * @since 1.0
      */
     private ResponseEntity<FavoriteSourceResource> getFavoriteSourceByNewsApiKeyAndSourceId(String newsApiKey, String sourceId) {
         var getFavoriteSourceByNewsApiKeyAndSourceIdQuery = new GetFavoriteSourceByNewsApiKeyAndSourceIdQuery(newsApiKey, sourceId);
@@ -129,14 +146,14 @@ public class FavoriteSourcesController {
 
     /**
      * Gets favorite sources with parameters.
-     * @summary
-     * This method gets favorite sources based on the parameters provided.
-     * If the parameters contain newsApiKey and sourceId, it gets the favorite source by news API key and source ID.
-     * If the parameters contain only newsApiKey, it gets all favorite sources by news API key.
+     *
      * @param params Map of parameters including newsApiKey and optionally sourceId
      * @return ResponseEntity with the favorite source resource or resources according to the parameters, or bad request if the parameters are invalid
-     * @since 1.0
+     * @summary This method gets favorite sources based on the parameters provided.
+     * If the parameters contain newsApiKey and sourceId, it gets the favorite source by news API key and source ID.
+     * If the parameters contain only newsApiKey, it gets all favorite sources by news API key.
      * @see FavoriteSourceResource
+     * @since 1.0
      */
     @Operation(
             summary = "Get favorite sources with parameters (News API key and optionally Source ID)",
