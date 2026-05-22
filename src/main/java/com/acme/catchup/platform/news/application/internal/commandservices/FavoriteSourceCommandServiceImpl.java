@@ -16,8 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 /**
- * Application service implementing the favorite source command handler.
- * Orchestrates the domain invariant that (newsApiKey, sourceId) must be unique.
+ * Application service for favorite source command operations.
+ * Contains the command handler method that orchestrates the domain invariant
+ * ensuring (newsApiKey, sourceId) must be unique.
  * Handles duplicate key constraint violations by returning empty, implementing
  * idempotency at the application layer rather than raising exceptions.
  *
