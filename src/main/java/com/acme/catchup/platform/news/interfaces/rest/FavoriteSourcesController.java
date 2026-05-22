@@ -74,7 +74,8 @@ public class FavoriteSourcesController {
             description = "Creates a favorite source with the provided news API key and source ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Favorite source created"),
-            @ApiResponse(responseCode = "400", description = "Bad request")
+            @ApiResponse(responseCode = "400", description = "Bad request"),
+            @ApiResponse(responseCode = "409", description = "Conflict - favorite source already exists for the given newsApiKey and sourceId")
     })
     @PostMapping
     public ResponseEntity<?> createFavoriteSource(@Valid @RequestBody CreateFavoriteSourceResource resource) {
@@ -121,8 +122,9 @@ public class FavoriteSourcesController {
     private ResponseEntity<List<FavoriteSourceResource>> getAllFavoriteSourcesByNewsApiKey(String newsApiKey) {
         var getAllFavoriteSourcesByNewsApiKeyQuery = new GetAllFavoriteSourcesByNewsApiKeyQuery(newsApiKey);
         var favoriteSources = favoriteSourceQueryService.handle(getAllFavoriteSourcesByNewsApiKeyQuery);
-        if (favoriteSources.isEmpty()) return ResponseEntity.notFound().build();
-        var favoriteSourceResources = favoriteSources.stream().map(FavoriteSourceResourceFromEntityAssembler::toResourceFromEntity).toList();
+        var favoriteSourceResources = favoriteSources.stream()
+                .map(FavoriteSourceResourceFromEntityAssembler::toResourceFromEntity)
+                .toList();
         return ResponseEntity.ok(favoriteSourceResources);
     }
 
@@ -169,12 +171,16 @@ public class FavoriteSourcesController {
     public ResponseEntity<?> getFavoriteSourcesWithParameters(
             @Parameter(name = "params", hidden = true)
             @RequestParam Map<String, String> params) {
-        if (params.containsKey("newsApiKey") && params.containsKey("sourceId")) {
-            return getFavoriteSourceByNewsApiKeyAndSourceId(params.get("newsApiKey"), params.get("sourceId"));
-        } else if (params.containsKey("newsApiKey")) {
-            return getAllFavoriteSourcesByNewsApiKey(params.get("newsApiKey"));
+        String newsApiKey = params.get("newsApiKey");
+        String sourceId = params.get("sourceId");
+        if (newsApiKey != null && !newsApiKey.isBlank() && sourceId != null && !sourceId.isBlank()) {
+            return getFavoriteSourceByNewsApiKeyAndSourceId(newsApiKey, sourceId);
+        } else if (newsApiKey != null && !newsApiKey.isBlank()) {
+            return getAllFavoriteSourcesByNewsApiKey(newsApiKey);
         } else {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(
+                    ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                            "Missing or blank required parameter: newsApiKey"));
         }
     }
 }
