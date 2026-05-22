@@ -7,9 +7,9 @@ import java.util.Optional;
 
 /**
  * Domain service defining the contract for favorite source command operations.
- * Represents domain-level command handlers for creating favorite sources.
- * Implementations abstract away infrastructure concerns while maintaining focus
- * on domain invariants and business rules.
+ * Declares the command handler methods for creating favorite sources.
+ * Implementations are application services that abstract away infrastructure concerns
+ * while maintaining focus on domain invariants and business rules.
  */
 public interface FavoriteSourceCommandService {
     /**
