@@ -55,7 +55,7 @@ public class FavoriteSourceCommandServiceImpl implements FavoriteSourceCommandSe
             return Optional.of(createdFavoriteSource);
         } catch (DataIntegrityViolationException exception) {
             if (isDuplicateFavoriteSourceViolation(exception)) {
-                // Unique constraint hit: treat as duplicate create request.
+                // Invariant violation: Duplicate favorite source
                 LOGGER.warn(messageSource.getMessage("favorite.source.error.duplicate", null, LocaleContextHolder.getLocale()));
                 return Optional.empty();
             }
