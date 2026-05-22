@@ -47,13 +47,13 @@ package "news" {
   }
 
   package "application.internal.commandservices" {
-    class FavoriteSourceCommandServiceImpl <<command-handler>> {
+    class FavoriteSourceCommandServiceImpl <<application-service>> {
       +handle(CreateFavoriteSourceCommand) : Optional<FavoriteSource>
     }
   }
 
   package "application.internal.queryservices" {
-    class FavoriteSourceQueryServiceImpl <<query-handler>> {
+    class FavoriteSourceQueryServiceImpl <<application-service>> {
       +handle(GetAllFavoriteSourcesByNewsApiKeyQuery) : List<FavoriteSource>
       +handle(GetFavoriteSourceByIdQuery) : Optional<FavoriteSource>
       +handle(GetFavoriteSourceByNewsApiKeyAndSourceIdQuery) : Optional<FavoriteSource>
@@ -145,11 +145,10 @@ CreateFavoriteSourceCommand --> FavoriteSource : constructs
  ' Note about repository placement
 note bottom
   DDD Architecture Overview:
-  - Inbound Service: REST controller receiving HTTP requests
-  - Translators: Convert between HTTP Resources and domain models
+  - Inbound Service: REST controller receiving HTTP requests (interface layer)
+  - Translators: Convert between HTTP Resources and domain models across layer boundaries
   - Domain Services: Define contracts for command and query operations
-  - Command Handler: Orchestrates write operations, enforcing invariants
-  - Query Handler: Retrieves domain models for query specifications
+  - Application Services: Orchestrate command and query handling; each handle() method acts as a command or query handler
   - Aggregate Root: FavoriteSource enforces unique (newsApiKey, sourceId) invariant
   - Repository: Provides collection-like access to aggregates in persistence layer
 
