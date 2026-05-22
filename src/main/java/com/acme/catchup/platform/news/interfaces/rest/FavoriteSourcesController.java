@@ -85,8 +85,7 @@ public class FavoriteSourcesController {
                     HttpStatus.CONFLICT,
                     messageSource.getMessage("favorite.source.error.duplicate", null,
                             LocaleContextHolder.getLocale())));
-        return favoriteSource.map(source -> new ResponseEntity<>(FavoriteSourceResourceFromEntityAssembler.toResourceFromEntity(source), CREATED))
-                .orElseThrow();
+        return new ResponseEntity<>(FavoriteSourceResourceFromEntityAssembler.toResourceFromEntity(favoriteSource.get()), CREATED);
     }
 
     /**
