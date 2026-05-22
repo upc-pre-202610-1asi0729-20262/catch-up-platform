@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Application service implementing the favorite source query handler.
- * Translates domain query specifications into persistence operations, returning
- * domain models from storage to support application queries.
+ * Application service for favorite source query operations.
+ * Contains query handler methods that translate domain query specifications
+ * into persistence operations, returning domain models from storage.
  *
  * @since 1.0
  */
