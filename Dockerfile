@@ -13,8 +13,6 @@
 
 # Use a Maven image with Temurin JDK 26 for builds
 FROM maven:3.9.11-eclipse-temurin-26 AS build
-# Set the active profile for the Spring Boot application
-ENV SPRING_PROFILES_ACTIVE=prod
 # Set the working directory inside the container
 WORKDIR /app
 COPY .mvn .mvn
@@ -30,6 +28,7 @@ RUN ./mvnw clean package -DskipTests
 # Step 2: Create a runtime image
 # Copy the Spring Boot JAR file into the container
 FROM eclipse-temurin:26-jre AS runtime
+ENV SPRING_PROFILES_ACTIVE=prod
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
@@ -39,7 +38,7 @@ EXPOSE 8080
 # Define the command to run the Spring Boot application
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
-# Note: The application will run with the 'prod' profile as set in the build stage.
+# Note: The application will run with the 'prod' profile as set in the runtime stage.
 # This Dockerfile is designed to be used in a CI/CD pipeline or for local development.
 # It is necessary to define the following environment variables in the hosting provider for the application to
 # run correctly in the Production environment:
