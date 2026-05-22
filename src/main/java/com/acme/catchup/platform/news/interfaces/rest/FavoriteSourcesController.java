@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -41,6 +42,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(value = "/api/v1/favorite-sources", produces = APPLICATION_JSON_VALUE)
 @Tag(name = "Favorite Sources", description = "Endpoints for favorite sources")
 public class FavoriteSourcesController {
+    private static final int MAX_QUERY_PARAM_LENGTH = 256;
+    private static final Pattern QUERY_PARAM_PATTERN = Pattern.compile("^[A-Za-z0-9._:-]+$");
+
     private final FavoriteSourceCommandService favoriteSourceCommandService;
     private final FavoriteSourceQueryService favoriteSourceQueryService;
     private final MessageSource messageSource;
@@ -140,7 +144,6 @@ public class FavoriteSourcesController {
     private ResponseEntity<FavoriteSourceResource> getFavoriteSourceByNewsApiKeyAndSourceId(String newsApiKey, String sourceId) {
         var getFavoriteSourceByNewsApiKeyAndSourceIdQuery = new GetFavoriteSourceByNewsApiKeyAndSourceIdQuery(newsApiKey, sourceId);
         var favoriteSource = favoriteSourceQueryService.handle(getFavoriteSourceByNewsApiKeyAndSourceIdQuery);
-        if (favoriteSource.isEmpty()) return ResponseEntity.notFound().build();
         return favoriteSource.map(source -> ResponseEntity.ok(FavoriteSourceResourceFromEntityAssembler.toResourceFromEntity(source)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -173,6 +176,16 @@ public class FavoriteSourcesController {
             @RequestParam Map<String, String> params) {
         String newsApiKey = params.get("newsApiKey");
         String sourceId = params.get("sourceId");
+        if (newsApiKey != null && isInvalidQueryParam(newsApiKey)) {
+            return ResponseEntity.badRequest().body(
+                    ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                            "Invalid parameter: newsApiKey"));
+        }
+        if (sourceId != null && isInvalidQueryParam(sourceId)) {
+            return ResponseEntity.badRequest().body(
+                    ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                            "Invalid parameter: sourceId"));
+        }
         if (newsApiKey != null && !newsApiKey.isBlank() && sourceId != null && !sourceId.isBlank()) {
             return getFavoriteSourceByNewsApiKeyAndSourceId(newsApiKey, sourceId);
         } else if (newsApiKey != null && !newsApiKey.isBlank()) {
@@ -182,5 +195,9 @@ public class FavoriteSourcesController {
                     ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
                             "Missing or blank required parameter: newsApiKey"));
         }
+    }
+
+    private boolean isInvalidQueryParam(String value) {
+        return value.isBlank() || value.length() > MAX_QUERY_PARAM_LENGTH || !QUERY_PARAM_PATTERN.matcher(value).matches();
     }
 }
