@@ -1,14 +1,12 @@
-/**
- * CreateFavoriteSourceCommand
- * @summary
- * CreateFavoriteSourceCommand is a record class that represents the command to create a favorite news source.
- */
 package com.acme.catchup.platform.news.domain.model.commands;
 
 /**
  * CreateFavoriteSourceCommand
+ *
  * @summary
- * CreateFavoriteSourceCommand is a record class that represents the command to create a favorite news source.
+ * Record that represents the command to create a favorite news source.
+ * @param newsApiKey the News API key — must not be null or blank
+ * @param sourceId   the news source identifier — must not be null or blank
  */
 public record CreateFavoriteSourceCommand(String newsApiKey, String sourceId) {
     /**
