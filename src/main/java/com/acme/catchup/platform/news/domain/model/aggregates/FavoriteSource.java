@@ -15,7 +15,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.domain.AbstractAggregateRoot;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.Date;
+import java.time.Instant;
 
 /**
  * FavoriteSource Aggregate Root
@@ -46,11 +46,13 @@ public class FavoriteSource extends AbstractAggregateRoot<FavoriteSource> {
 
     @Column(nullable = false, updatable = false)
     @CreatedDate
-    private Date createdAt;
+    @Getter
+    private Instant createdAt;
 
     @Column(nullable = false)
     @LastModifiedDate
-    private Date updatedAt;
+    @Getter
+    private Instant updatedAt;
 
     protected FavoriteSource() {}
 
