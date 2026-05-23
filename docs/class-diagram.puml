@@ -32,14 +32,22 @@ package "news" {
       class CreateFavoriteSourceCommandFromResourceAssembler <<translator>> {
         +toCommandFromResource(CreateFavoriteSourceResource) : CreateFavoriteSourceCommand
       }
+      class ResponseEntityFromFavoriteSourceCommandResultAssembler <<translator>> {
+        +toResponseEntityFromResult(Result<FavoriteSource, FavoriteSourceCommandFailure>, MessageSource) : ResponseEntity
+      }
     }
   }
 
-  package "domain.services" {
-    interface FavoriteSourceCommandService <<domain-service>> {
-      +handle(CreateFavoriteSourceCommand) : Optional<FavoriteSource>
+  package "application.commandservices" {
+    interface FavoriteSourceCommandService <<application-service>> {
+      +handle(CreateFavoriteSourceCommand) : Result<FavoriteSource, FavoriteSourceCommandFailure>
     }
-    interface FavoriteSourceQueryService <<domain-service>> {
+    class FavoriteSourceCommandFailure <<failure>> {
+    }
+  }
+
+  package "application.queryservices" {
+    interface FavoriteSourceQueryService <<application-service>> {
       +handle(GetAllFavoriteSourcesByNewsApiKeyQuery) : List<FavoriteSource>
       +handle(GetFavoriteSourceByIdQuery) : Optional<FavoriteSource>
       +handle(GetFavoriteSourceByNewsApiKeyAndSourceIdQuery) : Optional<FavoriteSource>
@@ -48,7 +56,7 @@ package "news" {
 
   package "application.internal.commandservices" {
     class FavoriteSourceCommandServiceImpl <<application-service>> {
-      +handle(CreateFavoriteSourceCommand) : Optional<FavoriteSource>
+      +handle(CreateFavoriteSourceCommand) : Result<FavoriteSource, FavoriteSourceCommandFailure>
     }
   }
 
@@ -95,6 +103,11 @@ package "news" {
     }
   }
 
+  package "shared.application.result" {
+    interface Result <<result>> {
+    }
+  }
+
   package "infrastructure.persistence.jpa" {
     interface FavoriteSourceRepository <<repository>> {
       +List<FavoriteSource> findAllByNewsApiKey(String newsApiKey)
@@ -125,12 +138,19 @@ FavoriteSourcesController --> FavoriteSourceCommandService : uses
 FavoriteSourcesController --> FavoriteSourceQueryService : uses
 FavoriteSourcesController --> FavoriteSourceResourceFromEntityAssembler : uses
 FavoriteSourcesController --> CreateFavoriteSourceCommandFromResourceAssembler : uses
+FavoriteSourcesController --> ResponseEntityFromFavoriteSourceCommandResultAssembler : uses
 
 FavoriteSourceCommandServiceImpl ..|> FavoriteSourceCommandService : implements
 FavoriteSourceQueryServiceImpl ..|> FavoriteSourceQueryService : implements
+FavoriteSourceCommandService --> Result : returns
+FavoriteSourceCommandService --> FavoriteSourceCommandFailure : returns
 
 FavoriteSourceCommandServiceImpl --> FavoriteSourceRepository : uses
 FavoriteSourceQueryServiceImpl --> FavoriteSourceRepository : uses
+FavoriteSourceCommandServiceImpl --> Result : returns
+FavoriteSourceCommandServiceImpl --> FavoriteSourceCommandFailure : returns
+ResponseEntityFromFavoriteSourceCommandResultAssembler --> Result : consumes
+ResponseEntityFromFavoriteSourceCommandResultAssembler --> FavoriteSourceCommandFailure : consumes
 
 FavoriteSourceRepository --> FavoriteSource : manages
 
@@ -147,8 +167,9 @@ note bottom
   DDD Architecture Overview:
   - Inbound Service: REST controller receiving HTTP requests (interface layer)
   - Translators: Convert between HTTP Resources and domain models across layer boundaries
-  - Domain Services: Define contracts for command and query operations
+  - Application Contracts: Define command and query service interfaces in the application layer
   - Application Services: Orchestrate command and query handling; each handle() method acts as a command or query handler
+  - Response Translator: Converts Result values into HTTP ResponseEntity responses
   - Aggregate Root: FavoriteSource enforces unique (newsApiKey, sourceId) invariant
   - Repository: Provides collection-like access to aggregates in persistence layer
 
