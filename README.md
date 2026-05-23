@@ -49,11 +49,11 @@ The application resolves credentials and connection details from environment var
 
 ## Spring profiles
 
-| Profile | Usage |
-|---------|-------|
-| *(default)* | Uses `localhost:3306` with SSL enabled; SQL logging off |
-| `dev` | Uses `localhost:3306` with SSL disabled; SQL logging on |
-| `prod` | Reads full connection URL from env vars; used in Docker/CI |
+| Profile     | Usage                                                      |
+|-------------|------------------------------------------------------------|
+| *(default)* | Uses `localhost:3306` with SSL enabled; SQL logging off    |
+| `dev`       | Uses `localhost:3306` with SSL disabled; SQL logging on    |
+| `prod`      | Reads full connection URL from env vars; used in Docker/CI |
 
 Set the active profile with:
 
