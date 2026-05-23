@@ -2,7 +2,7 @@
 
 ## Overview
 
-Catch-Up Platform is a Spring Boot service that provides a REST API to manage users' favorite news sources. The project is structured around Domain-Driven Design (DDD), organized into bounded contexts (`news` and `shared`), using CQRS-style application services and JPA persistence.
+Catch-Up Platform is a Spring Boot service that provides a REST API to manage users' favorite news sources. The project is structured around Domain-Driven Design (DDD), organized into bounded contexts (`news` and `shared`), using application-layer command/query contracts, a shared `Result` abstraction for command outcomes, and JPA persistence.
 
 This service is designed to work with [NewsAPI.org](https://newsapi.org/):
 - `newsApiKey` refers to an API key issued by NewsAPI.org
@@ -15,6 +15,7 @@ This service is designed to work with [NewsAPI.org](https://newsapi.org/):
 - Retrieve a favorite source by its identifier
 - Retrieve a favorite source by News API key and source id
 - Create (persist) a new favorite source
+- Map command outcomes to HTTP responses through an interface-layer response translator
 - Custom Hibernate naming strategy to convert identifiers to snake_case and plural table names
 
 ## Technologies
@@ -67,6 +68,13 @@ The API-focused technical stories for frontend integration are in [`docs/user-st
 ## Class diagram
 
 A PlantUML class diagram that reflects the code structure and bounded contexts is available at [`docs/class-diagram.puml`](docs/class-diagram.puml).
+
+## Architecture notes
+
+- `news.application.commandservices` and `news.application.queryservices` define the application-layer service contracts
+- `news.application.internal.commandservices` and `news.application.internal.queryservices` contain the implementations
+- `shared.application.result.Result` models command outcomes without introducing HTTP or domain concepts
+- `news.interfaces.rest.transform.ResponseEntityFromFavoriteSourceCommandResultAssembler` maps command results to `ResponseEntity` values for the REST boundary
 
 ## API documentation (Swagger UI)
 
