@@ -37,7 +37,11 @@ As a frontend developer, I want to request a favorite source by its `{id}` so th
 - Scenario: Not found
     - Given a request for a favorite source identified by a non-existent `{id}` is received
     - When the API does not find the resource
-    - Then the API responds with `404 Not Found` and an empty body.
+    - Then the API responds with `404 Not Found` and a `ProblemDetail` payload describing the missing resource.
+- Scenario: Invalid id
+    - Given a request for a favorite source where `{id}` is less than or equal to `0` is received
+    - When the API validates the path parameter
+    - Then the API responds with `400 Bad Request` and an error payload describing the invalid id.
 ---
 ### TS003 — Check whether a source is favorite for a NewsAPI key
 **Endpoint:** `GET /api/v1/favorite-sources?newsApiKey={newsApiKey}&sourceId={sourceId}`
@@ -53,7 +57,7 @@ As a frontend developer, I want to query the API with `{newsApiKey}` and `{sourc
 - Scenario: Favorite does not exist
     - Given a request that specifies both `{newsApiKey}` and `{sourceId}` with no match is received
     - When the API does not find a matching resource
-    - Then the API responds with `404 Not Found` and an empty body.
+    - Then the API responds with `404 Not Found` and a `ProblemDetail` payload describing the missing resource.
 - Scenario: Invalid parameter value
     - Given a request with a `newsApiKey` or `sourceId` value that is blank, exceeds 256 characters, or contains disallowed characters is received
     - When the API validates the parameters

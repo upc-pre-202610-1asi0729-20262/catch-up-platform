@@ -83,6 +83,12 @@ When the application is running, interactive API documentation is available at:
 http://localhost:8080/swagger-ui/index.html
 ```
 
+## Error responses
+
+- Validation and domain input errors return `400 Bad Request` with a `ProblemDetail` payload.
+- Duplicate favorite creation returns `409 Conflict` with a localized `ProblemDetail` payload.
+- Not-found lookups (`GET /api/v1/favorite-sources/{id}` and `GET /api/v1/favorite-sources?newsApiKey=...&sourceId=...`) return `404 Not Found` with a localized `ProblemDetail` payload.
+
 ## Getting started (quick)
 
 Export the required environment variables, then run with the `dev` profile:

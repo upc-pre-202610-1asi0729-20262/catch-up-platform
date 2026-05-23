@@ -32,6 +32,10 @@ package "news" {
       class CreateFavoriteSourceCommandFromResourceAssembler <<translator>> {
         +toCommandFromResource(CreateFavoriteSourceResource) : CreateFavoriteSourceCommand
       }
+      class NewsValueObjectFromStringAssembler <<translator>> {
+        +toNewsApiKeyFromString(String) : NewsApiKey
+        +toSourceIdFromString(String) : SourceId
+      }
       class ResponseEntityFromFavoriteSourceCommandResultAssembler <<translator>> {
         +toResponseEntityFromResult(Result<FavoriteSource, FavoriteSourceCommandFailure>, MessageSource) : ResponseEntity
       }
@@ -45,7 +49,7 @@ package "news" {
     interface FavoriteSourceCommandFailure <<failure>> {
       +messageKey() : String
     }
-    class FavoriteSourceCommandFailureDuplicate <<failure>> {
+    class "FavoriteSourceCommandFailure.Duplicate" as FavoriteSourceCommandFailureDuplicate <<failure>> {
       +messageKey() : String
     }
   }
@@ -142,7 +146,7 @@ package "shared" {
       }
     }
 
-    package "infrastructure.persistence.jpa" {
+    package "infrastructure.persistence.jpa.strategy" {
       class SnakeCasePhysicalNamingStrategy <<strategy>> {
         +toPhysicalCatalogName(Identifier, JdbcEnvironment) : Identifier
         +toPhysicalSchemaName(Identifier, JdbcEnvironment) : Identifier
@@ -159,6 +163,7 @@ FavoriteSourcesController --> FavoriteSourceCommandService : uses
 FavoriteSourcesController --> FavoriteSourceQueryService : uses
 FavoriteSourcesController --> FavoriteSourceResourceFromEntityAssembler : uses
 FavoriteSourcesController --> CreateFavoriteSourceCommandFromResourceAssembler : uses
+FavoriteSourcesController --> NewsValueObjectFromStringAssembler : uses
 FavoriteSourcesController --> ResponseEntityFromFavoriteSourceCommandResultAssembler : uses
 
 FavoriteSourceCommandServiceImpl ..|> FavoriteSourceCommandService : implements
